@@ -1,5 +1,12 @@
+-- REPONSE QUESTION N°1
+-- Creation de la base de données biblio
+
 create database biblio;
+
+-- Activer la base de données biblio afin d'y travailler dessus
 use biblio;
+
+-- Creation de la table oeuvres
 CREATE TABLE oeuvres(
 	NO  		integer primary key auto_increment,
 	titre 		varchar(150) not null,
@@ -9,6 +16,7 @@ CREATE TABLE oeuvres(
 	genre		varchar(30)
 ) ENGINE InnoDB;
 
+-- Creation de la table adherents
 CREATE TABLE adherents (
 	NA		INT PRIMARY KEY AUTO_INCREMENT,
 	nom		VARCHAR(30) not null,
@@ -17,6 +25,7 @@ CREATE TABLE adherents (
 	tel		CHAR(10)
 ) ENGINE InnoDB;
 
+-- Creation de la table emprunter
 CREATE TABLE emprunter (
 	dateEmp		date not null,
 	dureeMax	integer not null,
@@ -24,6 +33,7 @@ CREATE TABLE emprunter (
 	index(dateEmp)
 ) ENGINE InnoDB;
 
+-- Insertion des données dans la table oeuvres
 INSERT INTO oeuvres (titre, auteur, editeur, annee, genre)
 VALUES 
 ('Narcisse et Goldmund', 'Hermann HESSE','GF', 1930, 'Roman'),
@@ -45,6 +55,7 @@ VALUES
 ('Au coeur des ténèbres','Joseph CONRAD', 'FOLIO', 1899, 'Roman'),
 ('Jan Karski','Yannick HAENEL', 'GALLIMARD', 2009, 'Roman');
 
+-- Instertion des données dans la table adherents
 INSERT INTO adherents
 VALUES 
 (1,'Lecoeur','Jeanette','16 rue de la République, 75010 Paris','0145279274'),
@@ -77,7 +88,7 @@ VALUES
 (28,'Frederic','Cyril','15 rue du Simplon, 75018 Paris','0173625492'),
 (29,'Crestard','Cedric','5 rue Doudeauville, 75018 Paris','0629485700'),
 (30,'Le Bihan','Karine','170 bis rue Ordener, 75018 Paris','0638995221');
-
+-- Insertion des données dans la table emprunter
 INSERT INTO emprunter (NO_o, dateEmp, dureeMax, dateRet, NA_a) VALUES 
 (1,from_days(to_days(current_date)-350),21,from_days(to_days(current_date)-349),26),
 (4,from_days(to_days(current_date)-323),21,from_days(to_days(current_date)-310),4),
@@ -113,4 +124,66 @@ INSERT INTO emprunter (NO_o, dateEmp, dureeMax, dateRet, NA_a) VALUES
 (5,from_days(to_days(current_date)-1),14, NULL,20),
 (18,from_days(to_days(current_date)-1),14, NULL,20);
 
+-- REPONSE DE LA QUESTION N°2
+-- Voir le fichier Analyse de l'énoncé.docx
 
+-- REPONSE DE LA QUESTION N°3
+-- Juste pour pouvoir contrôler le résultat, il importe tout d'abord ici de calculer nombre d'enregistrement dans la table oeuves
+-- Calcul nombre d'enregistrement (tuples) dans la table oeuvres
+SELECT COUNT(*) as nombre_oeuvres FROM oeuvres; -- 18
+
+-- Juste pour pouvoir contrôler le résultat, il importe tout d'abord ici de calculer nombre d'enregistrement dans la table adherents
+-- Calcul nombre d'enregistrement (tuples) dans la table adherents
+SELECT COUNT(*) as nombre_adherents FROM adherents; -- 30
+
+-- Juste pour pouvoir contrôler le résultat, il importe tout d'abord ici de calculer nombre d'enregistrement dans la table emprunter
+-- Calcul nombre d'enregistrement (tuples) dans la table emprunter
+SELECT COUNT(*) as nombre_emprunter FROM emprunter; -- 33
+
+-- -> Calcul de tous les enregistrements (tuples) dans la base de données biblio
+SELECT
+(
+	SELECT COUNT(*)
+	FROM oeuvres
+) +
+(
+	SELECT COUNT(*)
+	FROM adherents
+) +
+(
+	SELECT COUNT(*)
+	FROM emprunter
+) AS somme_enregisrements_biblio; -- 81 (CQFD => nombre_oeuvres = 18 + nombre_adherents = 30 + nombre_emprunter = 33)
+
+-- REPONSE DE LA QUESTION N°4
+-- Calcul nombre de colonne (attributs) dans la table oeuvres
+SELECT count(*) FROM information_schema.COLUMNS WHERE table_schema = 'biblio' AND table_name='oeuvres'; -- 6
+
+-- Calcul nombre de colonne (attributs) dans la table adherents
+SELECT count(*) FROM information_schema.COLUMNS WHERE table_schema = 'biblio' AND table_name='adherents'; -- 5
+
+-- Calcul nombre de colonne (attributs) dans la table adherents
+SELECT count(*) FROM information_schema.COLUMNS WHERE table_schema = 'biblio' AND table_name='emprunter'; -- 6
+
+-- -> Calcul nombre de toutes les colonnes (attributs) dans la base de données biblio
+SELECT
+(SELECT count(*) FROM information_schema.COLUMNS WHERE table_schema = 'biblio' AND table_name='oeuvres')
++
+(SELECT count(*) FROM information_schema.COLUMNS WHERE table_schema = 'biblio' AND table_name='adherents')
++
+(SELECT count(*) FROM information_schema.COLUMNS WHERE table_schema = 'biblio' AND table_name='emprunter')
+AS nombre_colonnes_biblio; -- 17 (CQFD => nombre_de_colonnes_oeuvres = 6 + nombre_de_colonnes_adherents = 5 + 30; nombre_de_colonnes_emprunter = 6)
+
+-- REPONSE DE LA QUESTION N°5
+-- Clé primaire de la table oeuvres
+-- NO int AI PK
+
+-- Clé primaire de la table adherents
+-- NA int AI PK
+
+-- Clé primaire de la table emprunter
+-- idEmprunter int AI PK
+
+-- REPONSE DE LA QUESTION N°6
+-- liste des livres (avec le nom et prénom des emprunteurs ainsi que la date d'emprunt)
+SELECT DISTINCT titre, nom, prenom, dateEmp FROM oeuvres, emprunter, adherents WHERE NO_O = NO AND NA_a = NA AND emprunter.dateRet IS NULL;
