@@ -8,7 +8,7 @@ use biblio;
 
 -- Creation de la table oeuvres
 CREATE TABLE oeuvres(
-	NO  		integer primary key auto_increment,
+	NumO  		integer primary key auto_increment,
 	titre 		varchar(150) not null,
 	auteur 		varchar(100),
 	editeur		varchar(50),
@@ -18,7 +18,7 @@ CREATE TABLE oeuvres(
 
 -- Creation de la table adherents
 CREATE TABLE adherents (
-	NA		INT PRIMARY KEY AUTO_INCREMENT,
+	NumA		INT PRIMARY KEY AUTO_INCREMENT,
 	nom		VARCHAR(30) not null,
 	prenom		VARCHAR(30),
 	adr		VARCHAR(100) not null,
@@ -27,9 +27,12 @@ CREATE TABLE adherents (
 
 -- Creation de la table emprunter
 CREATE TABLE emprunter (
+	idEmp		INT PRIMARY KEY AUTO_INCREMENT,
+    NumO_o      INT,
 	dateEmp		date not null,
 	dureeMax	integer not null,
 	dateRet 	date,
+    NumA_a      INT,
 	index(dateEmp)
 ) ENGINE InnoDB;
 
@@ -89,7 +92,7 @@ VALUES
 (29,'Crestard','Cedric','5 rue Doudeauville, 75018 Paris','0629485700'),
 (30,'Le Bihan','Karine','170 bis rue Ordener, 75018 Paris','0638995221');
 -- Insertion des données dans la table emprunter
-INSERT INTO emprunter (NO_o, dateEmp, dureeMax, dateRet, NA_a) VALUES 
+INSERT INTO emprunter (NumO_o, dateEmp, dureeMax, dateRet, NumA_a) VALUES 
 (1,from_days(to_days(current_date)-350),21,from_days(to_days(current_date)-349),26),
 (4,from_days(to_days(current_date)-323),21,from_days(to_days(current_date)-310),4),
 (10,from_days(to_days(current_date)-315),21,from_days(to_days(current_date)-318),9),
@@ -187,3 +190,88 @@ AS nombre_colonnes_biblio; -- 17 (CQFD => nombre_de_colonnes_oeuvres = 6 + nombr
 -- REPONSE DE LA QUESTION N°6
 -- liste des livres (avec le nom et prénom des emprunteurs ainsi que la date d'emprunt)
 SELECT DISTINCT titre, nom, prenom, dateEmp FROM oeuvres, emprunter, adherents WHERE NO_O = NO AND NA_a = NA AND emprunter.dateRet IS NULL;
+
+-- REPONSE DE LA QUESTION N°7
+-- Liste de livres que Jeanette Lecoeur a emprunté 
+-- En exécutant la requête ci-dessous, on ne peut pas obtenir un résultat puisque Jeannette avec deux "n" n'existe pas dans notre base de données biblio
+SELECT DISTINCT titre FROM oeuvres, emprunter, adherents WHERE oeuvres.NumO = emprunter.NumO_o AND emprunter.NumA_a = adherents.NumA AND adherents.nom LIKE "Lecoeur" AND adherents.prenom LIKE " Jeannette";
+
+-- Par contre, si on exécute la requête suivant en écrivant Jeanette avec un seul "n" nous obtenons 3 résultats
+SELECT DISTINCT titre FROM oeuvres, emprunter, adherents WHERE oeuvres.NumO = emprunter.NumO_o AND emprunter.NumA_a = adherents.NumA AND adherents.nom LIKE "Lecoeur" AND adherents.prenom LIKE "Jeanette";
+
+-- On pourra également exécuter la requête ci-dessous si on n'est pas sûr de l'orthographe du nom ou du prénom de la personne concernée
+-- En exécutant cette requête et si des ressemblances dans l'orthographe ou des homonymes existent dans la base de données, celles-ci seront affichées dans le résultat de la requête
+SELECT DISTINCT titre FROM oeuvres, emprunter, adherents WHERE oeuvres.NumO = emprunter.NumO_o AND emprunter.NumA_a = adherents.NumA AND adherents.nom LIKE "L%ur" AND adherents.prenom LIKE "J%te";
+
+-- REMARQUE : il existe effectivement 4 enregistrements d'emprunts au nom de Jeanette Lecoeur, mais les 2 enregistrements concernent un seul et même livre
+
+-- REPONSE DE LA QUESTION N°8
+-- La requête effectuée ci-dessous n'affiche aucun résultat car dans notre base de données il n'existe pas de livres empruntés en septembre 2009 
+SELECT titre FROM oeuvres, emprunter WHERE oeuvres.NumO = emprunter.NumO_o AND month(emprunter.dateEmp) = 9 AND year(emprunter.dateEmp) = 2009;
+
+-- Par contre, si on veut afficher la liste de livres empruntés en septembre 2021, on utilisera la requête suivante et on obtient 2 résultats
+SELECT titre FROM oeuvres, emprunter WHERE oeuvres.NumO = emprunter.NumO_o AND month(emprunter.dateEmp) = 9 AND year(emprunter.dateEmp) = 2021;
+
+-- REPONSE DE LA QUESTION N°9
+-- Liste des adhérents ayant emprunté le livre de l'auteur Fedor Dostoievski
+SELECT DISTINCT nom, prenom, adr, tel FROM oeuvres, emprunter, adherents WHERE oeuvres.NumO = emprunter.NumO_o AND emprunter.NumA_a = adherents.NumA AND oeuvres.auteur LIKE "Fedor Dostoievski";
+
+-- REPONSE DE LA QUESTION N°10
+-- Enregistrement d'un nouvel adhérent
+INSERT INTO adherents (nom, prenom, adr, tel)
+VALUES 
+('Olivier','Dupond','76, quai de la Loire, 75019 Paris','0102030405');
+
+-- REPONSE DE LA QUESTION N°11
+-- Enregistrement de deux nouveaux emprunts par Martine CROZIER
+INSERT INTO emprunter (NumO_o, dateEmp, dureeMax, dateRet, NumA_a) VALUES 
+(17,from_days(to_days(current_date)),21,NULL,7),
+(7,from_days(to_days(current_date)),21,NULL,7);
+
+-- REPONSE DE LA QUESTION N°12
+-- Enregistrement de retour de livres empruntées par Cyril FREDERIC
+UPDATE emprunter
+SET dateRet = from_days(to_days(current_date))
+WHERE NumA_a = 28;
+
+-- REPONSE DE LA QUESTION N°13
+-- Remarque : comme mentionné dans le fichier Analyse de l'énoncé.docx inclus dans le repository, 
+-- nous avons préféré supprimer le table livre, ainsi comme le livre n°23 est relié à l'oeuvre n°7, on mettra la condition NumO_o=7
+-- et pour savoir si le livre est disponible dans la librairie on doit également mentionné dans notre requête SQL une seconde condition qui 
+-- nous permet de savoir si cette livre est bel et bien retourné à la libraire sinon il n'est pas possible d'enregistrer un nouvel emprunt pour l'adhérent n°28 nommé Cyril FREDERIC
+UPDATE emprunter
+SET 
+dateEmp = from_days(to_days(current_date)),
+NumA_a = 28
+WHERE NumO_o = 7 AND dateRet IS NOT NULL; -- 0 row(s) affected Rows matched: 0 changed: 0 Warnings: 0
+
+-- REPONSE DE LA QUESTION N°14 : idem
+-- Cyril essaye d'emprunter le livre n°29 donc c'est l'oeuvre n°1
+UPDATE emprunter
+SET 
+dateEmp = from_days(to_days(current_date)),
+NumA_a = 28
+WHERE NumO_o = 1 AND dateRet IS NOT NULL OR dateRet < current_date() ; -- 5 row(s) affected Rows matched: 5 changed: 5 Warnings: 0
+
+-- REPONSE DE LA QUESTION N°15
+-- Le ou les auteurs du livre : Voyage au bout de la nuit
+SELECT auteur FROM oeuvres WHERE titre = "Voyage au bout de la nuit"; -- Louis-Ferdinand CELINE
+
+-- REPONSE DE LA QUESTION N°16
+-- Le ou les éditeurs du livre : Narcisse et Goldmund
+SELECT editeur FROM oeuvres WHERE titre = "Narcisse et Goldmund"; -- GF
+-- REPONSE DE LA QUESTION N°17
+
+-- REPONSE DE LA QUESTION N°18
+
+-- REPONSE DE LA QUESTION N°19
+
+-- REPONSE DE LA QUESTION N°20
+
+-- REPONSE DE LA QUESTION N°21
+
+-- REPONSE DE LA QUESTION N°22
+
+-- REPONSE DE LA QUESTION N°23
+
+-- REPONSE DE LA QUESTION N°24
